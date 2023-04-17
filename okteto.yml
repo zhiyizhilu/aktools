@@ -1,45 +1,20 @@
 name: aktools
-
-# The build section defines how to build the images of your development environment
-# More info: https://www.okteto.com/docs/reference/manifest/#build
-build:
-
-  # You can use the following env vars to refer to this image in your deploy commands:
-  #  - OKTETO_BUILD_AKTOOLS_REGISTRY: image registry
-  #  - OKTETO_BUILD_AKTOOLS_REPOSITORY: image repo
-  #  - OKTETO_BUILD_AKTOOLS_IMAGE: image name
-  #  - OKTETO_BUILD_AKTOOLS_TAG: image tag
-  aktools:
-    context: .
-    dockerfile: Dockerfile
-
-# The deploy section defines how to deploy your development environment
-# More info: https://www.okteto.com/docs/reference/manifest/#deploy
-# deploy:
-#   commands:
-#   - name: Deploy
-#     command: echo 'Replace this line with the proper 'helm' or 'kubectl' commands to deploy your development environment'
-
-
-# The dependencies section defines other git repositories to be deployed as part of your development environment
-# More info: https://www.okteto.com/docs/reference/manifest/#dependencies
-# dependencies:
-#   - https://github.com/okteto/sample
-
-
-# The dev section defines how to activate a development container
-# More info: https://www.okteto.com/docs/reference/manifest/#dev
-dev:
-  aktools:
-    image: okteto/python:3
-    command: bash
-    sync:
-      - .:/usr/src/app
-    forward:
-      - 8080:8080
-    reverse:
-      - 9000:9000
-    autocreate: true
-    volumes:
-      - /root/.cache/pip
-
+labels:
+  okteto.auto-create: "true" # 在创建开发环境时自动创建应用程序
+image: notcounted/aktools:latest
+command:
+  - /bin/sh
+  - -c
+  - gunicorn --bind 0.0.0.0:8080 main:app -k uvicorn.workers.UvicornWorker
+securityContext:
+  capabilities:
+    add:
+      - NET_ADMIN # 添加安全操作限制能力
+ports:
+  - name: http
+    containerPort: 8080 # 允许 Okteto 访问的端口
+volumes:
+  - name: app
+    mountPath: /usr/local/lib/python3.11/site-packages/aktools/
+  - name: dev
+    mountPath: /usr/src/app
